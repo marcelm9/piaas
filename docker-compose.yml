@@ -3,13 +3,15 @@ version: '3.8'
 services:
   web:
     build: .
+    # Runs the factory app from run.py using Gunicorn
+    command: gunicorn --bind 0.0.0.0:8000 run:app
     ports:
       - "8000:8000"
     environment:
-      # Connects to the database service defined below
-      - DATABASE_URL=postgresql://nerds_user:nerds_pass@db:5432/nerds_db
+      - DATABASE_URL=postgresql+psycopg2://nerds_user:nerds_pass@db:5432/nerds_db
     depends_on:
-      - db
+      db:
+        condition: service_started
     restart: unless-stopped
 
   db:
