@@ -1,5 +1,5 @@
 from flask import Flask
-from web.config import Config
+from config import Config
 from .extensions import db
 from .routes import main
 

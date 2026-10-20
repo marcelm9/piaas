@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>NERDS uc - Land Animal Tracker</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 40px;
+            background-color: #f4f7f6;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: auto;
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+
+        table {
+            border-collapse: collapse;
+            width: 100%;
+            margin-top: 20px;
+        }
+
+        th,
+        td {
+            border: 1px solid #ddd;
+            padding: 12px;
+            text-align: left;
+        }
+
+        th {
+            background-color: #8B4513;
+            color: white;
+        }
+
+        /* Brown theme for land */
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        input[type="text"] {
+            width: 100%;
+            padding: 8px;
+            box-sizing: border-box;
+        }
+
+        button {
+            background-color: #8B4513;
+            color: white;
+            padding: 10px 15px;
+            border: none;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background-color: #A0522D;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <h1>NERDS uc - Land Animal Tracker</h1>
+
+        <h3>Log a New Sighting</h3>
+        <form action="{{ url_for('main.add_observation') }}" method="POST">
+            <div class="form-group">
+                <label>Animal Name:</label>
+                <input type="text" name="animal_name" placeholder="e.g., Brown Bear, Red Fox" required>
+            </div>
+            <div class="form-group">
+                <label>Stream Location:</label>
+                <input type="text" name="stream_name" placeholder="e.g., Brooks Falls Cam 1" required>
+            </div>
+            <button type="submit">Submit Sighting</button>
+        </form>
+
+        <h3>Observation Log</h3>
+        <table>
+            <tr>
+                <th>ID</th>
+                <th>Animal</th>
+                <th>Stream</th>
+                <th>Timestamp (UTC)</th>
+            </tr>
+            {% for obs in observations %}
+            <tr>
+                <td>{{ obs.id }}</td>
+                <td>{{ obs.animal_name }}</td>
+                <td>{{ obs.stream_name }}</td>
+                <td>{{ obs.timestamp.strftime('%Y-%m-%d %H:%M:%S') }}</td>
+            </tr>
+            {% else %}
+            <tr>
+                <td colspan="4">No observations logged yet.</td>
+            </tr>
+            {% endfor %}
+        </table>
+    </div>
+</body>
+
+</html>

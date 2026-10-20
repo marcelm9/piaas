@@ -1,0 +1,9 @@
+services:
+  web-sea:
+    build: .
+    command: gunicorn --bind 0.0.0.0:8002 run:app
+    ports:
+      - "8002:8002"
+    environment:
+      - DATABASE_URL=postgresql+psycopg2://nerds_user:nerds_pass@192.168.100.30:5434/nerds_db
+    restart: unless-stopped

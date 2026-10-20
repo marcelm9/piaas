@@ -1,0 +1,26 @@
+---
+- name: Provision Podman VMs on Proxmox
+  hosts: proxmox_host # Make sure this is defined in your inventory
+  tasks:
+    - name: Clone Template to 3 New VMs
+      command: qm clone 107 {{ item.vmid }} --name {{ item.name }} --full 1
+      loop:
+        - { vmid: 201, name: podman-node-1 }
+        - { vmid: 202, name: podman-node-2 }
+        - { vmid: 203, name: podman-node-3 }
+      ignore_errors: yes 
+
+    - name: Set IP Addresses (Replace with your actual subnet/gateway)
+      command: qm set {{ item.vmid }} --ipconfig0 ip={{ item.ip }}/24,gw=192.168.100.1
+      loop:
+        - { vmid: 201, ip: 192.168.100.201 }
+        - { vmid: 202, ip: 192.168.100.202 }
+        - { vmid: 203, ip: 192.168.100.203 }
+
+    - name: Start the new VMs
+      command: qm start {{ item }}
+      loop:
+        - 201
+        - 202
+        - 203
+      ignore_errors: yes
