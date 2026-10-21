@@ -6,4 +6,5 @@ class Observation(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     animal_name = db.Column(db.String(100), nullable=False)
     stream_name = db.Column(db.String(100), nullable=False)
+    animal_type = db.Column(db.String(20), nullable=False)  
     timestamp = db.Column(db.DateTime, default=datetime.utcnow)
