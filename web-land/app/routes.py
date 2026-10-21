@@ -7,7 +7,11 @@ main = Blueprint("main", __name__)
 
 @main.route("/")
 def index():
-    observations = Observation.query.order_by(Observation.timestamp.desc()).all()
+    observations = (
+        Observation.query.filter_by(animal_type="land")
+        .order_by(Observation.timestamp.desc())
+        .all()
+    )
     return render_template("index.html", observations=observations)
 
 
@@ -17,7 +21,9 @@ def add_observation():
     stream = request.form.get("stream_name")
 
     if animal and stream:
-        new_obs = Observation(animal_name=animal, stream_name=stream)
+        new_obs = Observation(
+            animal_name=animal, stream_name=stream, animal_type="land"
+        )
         db.session.add(new_obs)
         db.session.commit()
 

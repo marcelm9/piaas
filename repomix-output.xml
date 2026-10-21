@@ -1,0 +1,871 @@
+This file is a merged representation of the entire codebase, combined into a single document by Repomix.
+
+<file_summary>
+This section contains a summary of this file.
+
+<purpose>
+This file contains a packed representation of the entire repository's contents.
+It is designed to be easily consumable by AI systems for analysis, code review,
+or other automated processes.
+</purpose>
+
+<file_format>
+The content is organized as follows:
+1. This summary section
+2. Repository information
+3. Directory structure
+4. Repository files (if enabled)
+5. Multiple file entries, each consisting of:
+  - File path as an attribute
+  - Full contents of the file
+</file_format>
+
+<usage_guidelines>
+- This file should be treated as read-only. Any changes should be made to the
+  original repository files, not this packed version.
+- When processing this file, use the file path to distinguish
+  between different files in the repository.
+- Be aware that this file may contain sensitive information. Handle it with
+  the same level of security as you would the original repository.
+</usage_guidelines>
+
+<notes>
+- Some files may have been excluded based on .gitignore rules and Repomix's configuration
+- Binary files are not included in this packed representation. Please refer to the Repository Structure section for a complete list of file paths, including binary files
+- Files matching patterns in .gitignore are excluded
+- Files matching default ignore patterns are excluded
+- Files are sorted by Git change count (files with more changes are at the bottom)
+</notes>
+
+</file_summary>
+
+<directory_structure>
+ansible/
+  create_env.sh
+  inventory.ini
+  provision_cluster.yml
+  requirements.txt
+db/
+  docker-compose.yml
+db-land-sea/
+  docker-compose.yml
+web/
+  app/
+    templates/
+      index.html
+    __init__.py
+    extensions.py
+    models.py
+    routes.py
+  config.py
+  docker-compose.yml
+  Dockerfile
+  requirements.txt
+  run.py
+web-land/
+  app/
+    templates/
+      index.html
+    __init__.py
+    extensions.py
+    models.py
+    routes.py
+  config.py
+  docker-compose.yml
+  Dockerfile
+  requirements.txt
+  run.py
+web-sea/
+  app/
+    templates/
+      index.html
+    __init__.py
+    extensions.py
+    models.py
+    routes.py
+  config.py
+  docker-compose.yml
+  Dockerfile
+  requirements.txt
+  run.py
+.gitignore
+</directory_structure>
+
+<files>
+This section contains the contents of the repository's files.
+
+<file path="ansible/create_env.sh">
+python3 -m venv .venv
+source .venv/bin/activate
+pip install -r requirements.txt
+ansible-galaxy collection install community.general
+echo "Done. Run 'source .venv/bin/activate' to activate the virtual environment."
+</file>
+
+<file path="ansible/inventory.ini">
+[proxmox]
+proxmox_host ansible_host=proxmox
+</file>
+
+<file path="ansible/provision_cluster.yml">
+---
+- name: Provision Podman VMs on Proxmox
+  hosts: proxmox_host # Make sure this is defined in your inventory
+  tasks:
+    - name: Clone Template to 3 New VMs
+      command: qm clone 107 {{ item.vmid }} --name {{ item.name }} --full 1
+      loop:
+        - { vmid: 201, name: podman-node-1 }
+        - { vmid: 202, name: podman-node-2 }
+        - { vmid: 203, name: podman-node-3 }
+      ignore_errors: yes 
+
+    - name: Set IP Addresses (Replace with your actual subnet/gateway)
+      command: qm set {{ item.vmid }} --ipconfig0 ip={{ item.ip }}/24,gw=192.168.100.1
+      loop:
+        - { vmid: 201, ip: 192.168.100.201 }
+        - { vmid: 202, ip: 192.168.100.202 }
+        - { vmid: 203, ip: 192.168.100.203 }
+
+    - name: Start the new VMs
+      command: qm start {{ item }}
+      loop:
+        - 201
+        - 202
+        - 203
+      ignore_errors: yes
+</file>
+
+<file path="ansible/requirements.txt">
+proxmoxer
+requests
+ansible
+</file>
+
+<file path="db/docker-compose.yml">
+services:
+  db:
+    image: postgres:15-alpine
+    environment:
+      - POSTGRES_USER=nerds_user
+      - POSTGRES_PASSWORD=nerds_pass
+      - POSTGRES_DB=nerds_db
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    restart: unless-stopped
+
+volumes:
+  pgdata:
+</file>
+
+<file path="db-land-sea/docker-compose.yml">
+services:
+  db:
+    image: postgres:15-alpine
+    environment:
+      POSTGRES_USER: nerds_user
+      POSTGRES_PASSWORD: nerds_pass
+      POSTGRES_DB: nerds_db
+    ports:
+      - "5434:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    restart: unless-stopped
+
+volumes:
+  pgdata:
+</file>
+
+<file path="web/app/templates/index.html">
+<!DOCTYPE html>
+<html>
+<head>
+    <title>NERDS uc - Wild Cam Tracker</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 40px; background-color: #f9f9f9; }
+        .container { max-width: 800px; margin: auto; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 0 10px rgba(0,0,0,0.1); }
+        table { border-collapse: collapse; width: 100%; margin-top: 20px; }
+        th, td { border: 1px solid #ddd; padding: 12px; text-align: left; }
+        th { background-color: #4CAF50; color: white; }
+        .form-group { margin-bottom: 15px; }
+        input[type="text"] { width: 100%; padding: 8px; box-sizing: border-box; }
+        button { background-color: #4CAF50; color: white; padding: 10px 15px; border: none; cursor: pointer; }
+        button:hover { background-color: #45a049; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>NERDS uc - Wild Cam Tracker</h1>
+        
+        <h3>Log a New Sighting</h3>
+        <form action="{{ url_for('main.add_observation') }}" method="POST">
+            <div class="form-group">
+                <label>Animal Name:</label>
+                <input type="text" name="animal_name" placeholder="e.g., Brown Bear" required>
+            </div>
+            <div class="form-group">
+                <label>Stream Location:</label>
+                <input type="text" name="stream_name" placeholder="e.g., Brooks Falls Cam 1" required>
+            </div>
+            <button type="submit">Submit Sighting</button>
+        </form>
+
+        <h3>Observation Log</h3>
+        <table>
+            <tr>
+                <th>ID</th>
+                <th>Animal</th>
+                <th>Stream</th>
+                <th>Timestamp (UTC)</th>
+            </tr>
+            {% for obs in observations %}
+            <tr>
+                <td>{{ obs.id }}</td>
+                <td>{{ obs.animal_name }}</td>
+                <td>{{ obs.stream_name }}</td>
+                <td>{{ obs.timestamp.strftime('%Y-%m-%d %H:%M:%S') }}</td>
+            </tr>
+            {% else %}
+            <tr>
+                <td colspan="4">No observations logged yet.</td>
+            </tr>
+            {% endfor %}
+        </table>
+    </div>
+</body>
+</html>
+</file>
+
+<file path="web/app/extensions.py">
+from flask_sqlalchemy import SQLAlchemy
+
+db = SQLAlchemy()
+</file>
+
+<file path="web/app/models.py">
+from datetime import datetime
+from .extensions import db
+
+
+class Observation(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    animal_name = db.Column(db.String(100), nullable=False)
+    stream_name = db.Column(db.String(100), nullable=False)
+    timestamp = db.Column(db.DateTime, default=datetime.utcnow)
+</file>
+
+<file path="web/app/routes.py">
+from flask import Blueprint, render_template, request, redirect, url_for
+from .extensions import db
+from .models import Observation
+
+main = Blueprint("main", __name__)
+
+
+@main.route("/")
+def index():
+    observations = Observation.query.order_by(Observation.timestamp.desc()).all()
+    return render_template("index.html", observations=observations)
+
+
+@main.route("/add", methods=["POST"])
+def add_observation():
+    animal = request.form.get("animal_name")
+    stream = request.form.get("stream_name")
+
+    if animal and stream:
+        new_obs = Observation(animal_name=animal, stream_name=stream)
+        db.session.add(new_obs)
+        db.session.commit()
+
+    return redirect(url_for("main.index"))
+</file>
+
+<file path="web/config.py">
+import os
+
+
+class Config:
+    # Use environment variable, fallback to local SQLite
+    SQLALCHEMY_DATABASE_URI = os.environ.get("DATABASE_URL", "sqlite:///local_test.db")
+    SQLALCHEMY_TRACK_MODIFICATIONS = False
+</file>
+
+<file path="web/Dockerfile">
+# Use a lightweight Python image
+FROM python:3.11-slim
+
+# Prevent Python from writing .pyc files and enable unbuffered logging
+ENV PYTHONDONTWRITEBYTECODE=1
+ENV PYTHONUNBUFFERED=1
+
+# Set the working directory
+WORKDIR /app
+
+# Install dependencies first (takes advantage of Docker layer caching)
+COPY requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
+
+# Copy the rest of the application code
+COPY . .
+
+# Expose the port Gunicorn will listen on
+EXPOSE 8000
+</file>
+
+<file path="web/requirements.txt">
+Flask==3.0.0
+Flask-SQLAlchemy==3.1.1
+psycopg2-binary==2.9.9
+gunicorn>=21.2.0
+</file>
+
+<file path="web-land/app/templates/index.html">
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>NERDS uc - Land Animal Tracker</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 40px;
+            background-color: #f4f7f6;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: auto;
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+
+        table {
+            border-collapse: collapse;
+            width: 100%;
+            margin-top: 20px;
+        }
+
+        th,
+        td {
+            border: 1px solid #ddd;
+            padding: 12px;
+            text-align: left;
+        }
+
+        th {
+            background-color: #8B4513;
+            color: white;
+        }
+
+        /* Brown theme for land */
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        input[type="text"] {
+            width: 100%;
+            padding: 8px;
+            box-sizing: border-box;
+        }
+
+        button {
+            background-color: #8B4513;
+            color: white;
+            padding: 10px 15px;
+            border: none;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background-color: #A0522D;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <h1>NERDS uc - Land Animal Tracker</h1>
+
+        <h3>Log a New Sighting</h3>
+        <form action="{{ url_for('main.add_observation') }}" method="POST">
+            <div class="form-group">
+                <label>Animal Name:</label>
+                <input type="text" name="animal_name" placeholder="e.g., Brown Bear, Red Fox" required>
+            </div>
+            <div class="form-group">
+                <label>Stream Location:</label>
+                <input type="text" name="stream_name" placeholder="e.g., Brooks Falls Cam 1" required>
+            </div>
+            <button type="submit">Submit Sighting</button>
+        </form>
+
+        <h3>Observation Log</h3>
+        <table>
+            <tr>
+                <th>ID</th>
+                <th>Animal</th>
+                <th>Stream</th>
+                <th>Timestamp (UTC)</th>
+            </tr>
+            {% for obs in observations %}
+            <tr>
+                <td>{{ obs.id }}</td>
+                <td>{{ obs.animal_name }}</td>
+                <td>{{ obs.stream_name }}</td>
+                <td>{{ obs.timestamp.strftime('%Y-%m-%d %H:%M:%S') }}</td>
+            </tr>
+            {% else %}
+            <tr>
+                <td colspan="4">No observations logged yet.</td>
+            </tr>
+            {% endfor %}
+        </table>
+    </div>
+</body>
+
+</html>
+</file>
+
+<file path="web-land/app/__init__.py">
+from flask import Flask
+from config import Config
+from .extensions import db
+from .routes import main
+
+
+def create_app(config_class=Config):
+    app = Flask(__name__)
+    app.config.from_object(config_class)
+
+    # Initialize extensions
+    db.init_app(app)
+
+    # Register blueprints
+    app.register_blueprint(main)
+
+    # Initialize database tables if they don't exist
+    with app.app_context():
+        db.create_all()
+
+    return app
+</file>
+
+<file path="web-land/app/extensions.py">
+from flask_sqlalchemy import SQLAlchemy
+
+db = SQLAlchemy()
+</file>
+
+<file path="web-land/app/models.py">
+from datetime import datetime
+from .extensions import db
+
+
+class Observation(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    animal_name = db.Column(db.String(100), nullable=False)
+    stream_name = db.Column(db.String(100), nullable=False)
+    timestamp = db.Column(db.DateTime, default=datetime.utcnow)
+</file>
+
+<file path="web-land/app/routes.py">
+from flask import Blueprint, render_template, request, redirect, url_for
+from .extensions import db
+from .models import Observation
+
+main = Blueprint("main", __name__)
+
+
+@main.route("/")
+def index():
+    observations = Observation.query.order_by(Observation.timestamp.desc()).all()
+    return render_template("index.html", observations=observations)
+
+
+@main.route("/add", methods=["POST"])
+def add_observation():
+    animal = request.form.get("animal_name")
+    stream = request.form.get("stream_name")
+
+    if animal and stream:
+        new_obs = Observation(animal_name=animal, stream_name=stream)
+        db.session.add(new_obs)
+        db.session.commit()
+
+    return redirect(url_for("main.index"))
+</file>
+
+<file path="web-land/config.py">
+import os
+
+
+class Config:
+    # Use environment variable, fallback to local SQLite
+    SQLALCHEMY_DATABASE_URI = os.environ.get("DATABASE_URL", "sqlite:///local_test.db")
+    SQLALCHEMY_TRACK_MODIFICATIONS = False
+</file>
+
+<file path="web-land/docker-compose.yml">
+services:
+  web-land:
+    build: .
+    command: gunicorn --bind 0.0.0.0:8001 run:app
+    ports:
+      - "8001:8001"
+    environment:
+      - DATABASE_URL=postgresql+psycopg2://nerds_user:nerds_pass@192.168.100.30:5434/nerds_db
+    restart: unless-stopped
+</file>
+
+<file path="web-land/Dockerfile">
+# Use a lightweight Python image
+FROM python:3.11-slim
+
+# Prevent Python from writing .pyc files and enable unbuffered logging
+ENV PYTHONDONTWRITEBYTECODE=1
+ENV PYTHONUNBUFFERED=1
+
+# Set the working directory
+WORKDIR /app
+
+# Install dependencies first (takes advantage of Docker layer caching)
+COPY requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
+
+# Copy the rest of the application code
+COPY . .
+
+# Expose the port Gunicorn will listen on
+EXPOSE 8000
+</file>
+
+<file path="web-land/requirements.txt">
+Flask==3.0.0
+Flask-SQLAlchemy==3.1.1
+psycopg2-binary==2.9.9
+gunicorn>=21.2.0
+</file>
+
+<file path="web-land/run.py">
+from app import create_app
+
+app = create_app()
+
+if __name__ == "__main__":
+    app.run(host="0.0.0.0", port=8000)
+</file>
+
+<file path="web-sea/app/templates/index.html">
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>NERDS uc - Sea Animal Tracker</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 40px;
+            background-color: #e0f7fa;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: auto;
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+
+        table {
+            border-collapse: collapse;
+            width: 100%;
+            margin-top: 20px;
+        }
+
+        th,
+        td {
+            border: 1px solid #ddd;
+            padding: 12px;
+            text-align: left;
+        }
+
+        th {
+            background-color: #0077be;
+            color: white;
+        }
+
+        /* Blue theme for sea */
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        input[type="text"] {
+            width: 100%;
+            padding: 8px;
+            box-sizing: border-box;
+        }
+
+        button {
+            background-color: #0077be;
+            color: white;
+            padding: 10px 15px;
+            border: none;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background-color: #005c99;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <h1>NERDS uc - Sea Animal Tracker</h1>
+
+        <h3>Log a New Sighting</h3>
+        <form action="{{ url_for('main.add_observation') }}" method="POST">
+            <div class="form-group">
+                <label>Animal Name:</label>
+                <input type="text" name="animal_name" placeholder="e.g., Orca, Great White Shark" required>
+            </div>
+            <div class="form-group">
+                <label>Stream Location:</label>
+                <input type="text" name="stream_name" placeholder="e.g., Monterey Bay Kelp Forest Cam" required>
+            </div>
+            <button type="submit">Submit Sighting</button>
+        </form>
+
+        <h3>Observation Log</h3>
+        <table>
+            <tr>
+                <th>ID</th>
+                <th>Animal</th>
+                <th>Stream</th>
+                <th>Timestamp (UTC)</th>
+            </tr>
+            {% for obs in observations %}
+            <tr>
+                <td>{{ obs.id }}</td>
+                <td>{{ obs.animal_name }}</td>
+                <td>{{ obs.stream_name }}</td>
+                <td>{{ obs.timestamp.strftime('%Y-%m-%d %H:%M:%S') }}</td>
+            </tr>
+            {% else %}
+            <tr>
+                <td colspan="4">No observations logged yet.</td>
+            </tr>
+            {% endfor %}
+        </table>
+    </div>
+</body>
+
+</html>
+</file>
+
+<file path="web-sea/app/__init__.py">
+from flask import Flask
+from config import Config
+from .extensions import db
+from .routes import main
+
+
+def create_app(config_class=Config):
+    app = Flask(__name__)
+    app.config.from_object(config_class)
+
+    # Initialize extensions
+    db.init_app(app)
+
+    # Register blueprints
+    app.register_blueprint(main)
+
+    # Initialize database tables if they don't exist
+    with app.app_context():
+        db.create_all()
+
+    return app
+</file>
+
+<file path="web-sea/app/extensions.py">
+from flask_sqlalchemy import SQLAlchemy
+
+db = SQLAlchemy()
+</file>
+
+<file path="web-sea/app/models.py">
+from datetime import datetime
+from .extensions import db
+
+
+class Observation(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    animal_name = db.Column(db.String(100), nullable=False)
+    stream_name = db.Column(db.String(100), nullable=False)
+    timestamp = db.Column(db.DateTime, default=datetime.utcnow)
+</file>
+
+<file path="web-sea/app/routes.py">
+from flask import Blueprint, render_template, request, redirect, url_for
+from .extensions import db
+from .models import Observation
+
+main = Blueprint("main", __name__)
+
+
+@main.route("/")
+def index():
+    observations = Observation.query.order_by(Observation.timestamp.desc()).all()
+    return render_template("index.html", observations=observations)
+
+
+@main.route("/add", methods=["POST"])
+def add_observation():
+    animal = request.form.get("animal_name")
+    stream = request.form.get("stream_name")
+
+    if animal and stream:
+        new_obs = Observation(animal_name=animal, stream_name=stream)
+        db.session.add(new_obs)
+        db.session.commit()
+
+    return redirect(url_for("main.index"))
+</file>
+
+<file path="web-sea/config.py">
+import os
+
+
+class Config:
+    # Use environment variable, fallback to local SQLite
+    SQLALCHEMY_DATABASE_URI = os.environ.get("DATABASE_URL", "sqlite:///local_test.db")
+    SQLALCHEMY_TRACK_MODIFICATIONS = False
+</file>
+
+<file path="web-sea/docker-compose.yml">
+services:
+  web-sea:
+    build: .
+    command: gunicorn --bind 0.0.0.0:8002 run:app
+    ports:
+      - "8002:8002"
+    environment:
+      - DATABASE_URL=postgresql+psycopg2://nerds_user:nerds_pass@192.168.100.30:5434/nerds_db
+    restart: unless-stopped
+</file>
+
+<file path="web-sea/Dockerfile">
+# Use a lightweight Python image
+FROM python:3.11-slim
+
+# Prevent Python from writing .pyc files and enable unbuffered logging
+ENV PYTHONDONTWRITEBYTECODE=1
+ENV PYTHONUNBUFFERED=1
+
+# Set the working directory
+WORKDIR /app
+
+# Install dependencies first (takes advantage of Docker layer caching)
+COPY requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
+
+# Copy the rest of the application code
+COPY . .
+
+# Expose the port Gunicorn will listen on
+EXPOSE 8000
+</file>
+
+<file path="web-sea/requirements.txt">
+Flask==3.0.0
+Flask-SQLAlchemy==3.1.1
+psycopg2-binary==2.9.9
+gunicorn>=21.2.0
+</file>
+
+<file path="web-sea/run.py">
+from app import create_app
+
+app = create_app()
+
+if __name__ == "__main__":
+    app.run(host="0.0.0.0", port=8000)
+</file>
+
+<file path=".gitignore">
+# Python cache files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Virtual environments
+venv/
+env/
+.venv/
+
+# Local database file generated by app.py
+local_test.db
+instance/
+
+# Environment variables / Secrets
+.env
+
+# IDE and OS specific files
+.vscode/
+.idea/
+.DS_Store
+</file>
+
+<file path="web/docker-compose.yml">
+services:
+  web:
+    build: .
+    # Runs the factory app from run.py using Gunicorn
+    command: gunicorn --bind 0.0.0.0:8000 run:app
+    ports:
+      - "8000:8000"
+    environment:
+      - DATABASE_URL=postgresql+psycopg2://nerds_user:nerds_pass@192.168.100.30:5432/nerds_db
+    restart: unless-stopped
+</file>
+
+<file path="web/run.py">
+from app import create_app
+
+app = create_app()
+
+if __name__ == "__main__":
+    app.run(host="0.0.0.0", port=8000)
+</file>
+
+<file path="web/app/__init__.py">
+from flask import Flask
+from config import Config
+from .extensions import db
+from .routes import main
+
+
+def create_app(config_class=Config):
+    app = Flask(__name__)
+    app.config.from_object(config_class)
+
+    # Initialize extensions
+    db.init_app(app)
+
+    # Register blueprints
+    app.register_blueprint(main)
+
+    # Initialize database tables if they don't exist
+    with app.app_context():
+        db.create_all()
+
+    return app
+</file>
+
+</files>
